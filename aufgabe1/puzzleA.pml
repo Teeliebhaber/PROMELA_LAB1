@@ -48,13 +48,73 @@ inline oneToTrue(array,time,flash){
 
 inline twoToTrue(array,time,flash){
 	//select two random values and set them to true add time set flashoos to true
+	int i; 
+	int j;
+	do
+		select(i : LOW .. HIGH);
+		select(j : LOW .. HIGH);
+		if
+			::array[i] == false && array[j] == false-> goto exit;
+		fi
+	od
+	exit:
+	array[i] = true;
+	array[j] = true;
+	byte _time;
+	if
+		:: times[i] >= times[j] -> _time = times[i];
+		:: times[j] > times[i] -> _time = times[j];
+
+	fi
+	time = time + _time;
+
+	flash = true;
 }
 
 inline oneToFalse(array,time,flash){
 	//select one value which is false set it to true set flashoos to false and add time
+
+	int i;
+	do
+		select(i : LOW .. HIGH);
+		if
+			::array[i] == true -> goto exit;
+		fi
+	od
+		
+	exit:
+	array[i] = false;
+	time = time + times[i];
+	
+	
+
+	flash = false;
+
 }
 inline twoToFalse(array,time,flash){
 	//select two false values set them to true add time set flashoos to false 
+	int i; 
+	int j;
+	do
+		select(i : LOW .. HIGH);
+		select(j : LOW .. HIGH);
+		if
+			::array[i] == true && array[j] == true-> goto exit;
+		fi
+	od
+	exit:
+	array[i] = false;
+	array[j] = false;
+	byte _time;
+	if
+		:: times[i] >= times[j] -> _time = times[i];
+		:: times[j] > times[i] -> _time = times[j];
+
+	fi
+	time = time + _time;
+
+	flash = false;
+
 }
 inline getCountTrue(array,count){
 	int i;
