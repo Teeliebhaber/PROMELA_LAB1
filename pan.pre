@@ -1,0 +1,47 @@
+# 1 "attacker.pml"
+# 1 "<built-in>"
+# 1 "<command-line>"
+# 1 "attacker.pml"
+active proctype Attacker() {
+  mtype msg, receipt;
+  EncMsg data, captured;
+  do
+    :: network ? (msg, _, data) ->
+       if
+         :: captured.key = data.key;
+            captured.content1 = data.content1;
+            captured.content2 = data.content2;
+         :: skip;
+       fi;
+
+    ::
+       if
+         :: msg = msgId1;
+         :: msg = msgId2;
+         :: msg = msgId3;
+       fi;
+       if
+         :: receipt = agentB;
+         :: receipt = agentI;
+       fi;
+       if
+       :: if
+              :: data.content1 = agentA;
+              :: data.content1 = agentB;
+              :: data.content1 = agentI;
+              :: data.content1 = nonceA;
+            fi;
+            if
+              :: data.key = keyA;
+              :: data.key = keyB;
+              :: data.key = keyI;
+            fi;
+            data.content2 = nonceA;
+       ::
+          data.key = captured.key;
+          data.content1 = captured.content1;
+          data.content2 = captured.content2;
+       fi;
+      network ! msg (receipt, data);
+  od
+}
