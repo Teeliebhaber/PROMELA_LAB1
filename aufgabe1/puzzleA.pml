@@ -11,6 +11,7 @@
 #define HIGH 3
 #define LOW 0
 
+
 byte times[PASSENGERS];
 times[0] = 1;
 times[1] = 2;
@@ -23,7 +24,8 @@ inline checkFinished (array, result) {
 	for ( i in array) {
 	if
 	:: array[i] == false -> result = false; break;
-	fi }
+	fi 
+	}
 	result = true;
 }
 
@@ -51,7 +53,7 @@ inline twoToTrue(array,time,flash){
 	int i; 
 	int j;
 	do
-		select(i : LOW .. HIGH);
+		::select(i : LOW .. HIGH);
 		select(j : LOW .. HIGH);
 		if
 			::array[i] == false && array[j] == false-> goto exit;
@@ -148,10 +150,6 @@ active proctype P() {
 	}
 
 	int countTrue = 4;
-	
-
-		
-
 
 	do
 		::countTrue > 0 &&flashOOS == false && finished == false  -> move(1,otherSide,time,flashOOS,countTrue,finished);

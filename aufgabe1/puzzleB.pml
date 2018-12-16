@@ -27,11 +27,12 @@ bool p3 = false;
 bool flash = false;
 
 inline checkFinished (result) {
-	int i;
 	result = true;
-	for(i = 0; i < PASSENGERS; i++){
-		if
-			::getI(i) == false -> result = false; break;
+	for(i : LOW .. HIGH){
+		getI(i,t);
+        if
+			::t == false -> result = false; break;
+            ::t == true -> result = true;
 		fi
 	}
 }
@@ -63,7 +64,7 @@ inline getI(i,t){
 	fi
 }
 
-getTime(i,t){
+inline getTime(i,t){
 	if
 	:: i == 0 -> t = time0;
 	:: i == 1 -> t = time1;
@@ -75,18 +76,17 @@ getTime(i,t){
 
 inline oneToTrue(){
 	//select a random false value and set it true add time set flashoos to true
-	int i;
-	bool t;
+
 	do
 		::select(i : LOW .. HIGH);
 		getI(i,t);
 		if
 			:: t == false -> goto exit;
+            :: t == true -> ;
 		fi
 	od
 	
 	exit:
-	byte _time;
 	setItoTrue(i);
 	getTime(i,_time);
 	time = time + _time
@@ -96,10 +96,7 @@ inline oneToTrue(){
 
 inline twoToTrue(){
 	//select two random values and set them to true add time set flashoos to true
-	int i;
-	int j;
-	bool z;
-	bool t;
+
 	do
 		::select(i : LOW .. HIGH);
 		select(j : LOW .. HIGH);
@@ -107,16 +104,15 @@ inline twoToTrue(){
 		getI(i,t);
 		if
 			:: t == false && z == false -> goto exit;
+            :: t == true || z == true -> ;
 		fi
 	od
 	exit:
-	
-	byte _time1;
-	byte _time2;
+
 	setItoTrue(i);
 	setItoTrue(j);
 	getTime(i,_time1);
-	getTIme(i,_time2);
+	getTime(i,_time2);
 	
 	if
 	:: _time1 > _time2 -> time = time + _time1;
@@ -128,18 +124,17 @@ inline twoToTrue(){
 
 inline oneToFalse(){
 	//select one value which is false set it to true set flashoos to false and add time
-		int i;
-	bool t;
+
 	do
 		::select(i : LOW .. HIGH);
 		getI(i,t);
 		if
 			:: t == true -> goto exit;
+            :: t = false -> ;
 		fi
 	od
 	
 	exit:
-	byte _time;
 	setItoFalse(i);
 	getTime(i,_time);
 	time = time + _time
@@ -149,10 +144,7 @@ inline oneToFalse(){
 }
 inline twoToFalse(){
 	//select two false values set them to true add time set flashoos to false 
-	int i;
-	int j;
-	bool z;
-	bool t;
+
 	do
 		::select(i : LOW .. HIGH);
 		select(j : LOW .. HIGH);
@@ -160,16 +152,15 @@ inline twoToFalse(){
 		getI(i,t);
 		if
 			:: t == true && z == true -> goto exit;
+            :: t == false || z == false -> ;
 		fi
 	od
 	exit:
 	
-	byte _time1;
-	byte _time2;
 	setItoFalse(i);
 	setItoFalse(j);
 	getTime(i,_time1);
-	getTIme(i,_time2);
+	getTime(i,_time2);
 	
 	if
 	:: _time1 > _time2 -> time = time + _time1;
@@ -180,16 +171,19 @@ inline twoToFalse(){
 }
 
 inline getCountTrue(count){
-	int i;
+
 	count = 0;
-	for(i = 0; i < PASSENGERS;i++){
+	for(i : LOW .. HIGH){
+        getI(i,t);
 		if
-		::getI(i) == true -> count++;
+		::t == true -> count++;
+        ::t == false -> count = count;
 		fi
 	}
 }
 
 inline move(selector, count, finished){
+    printf("movement i got here \n");
 	if
 	::selector == 1 -> oneToFalse();
 	::selector == 2 -> twoToFalse();
@@ -198,22 +192,38 @@ inline move(selector, count, finished){
 	fi
 	getCountTrue(count);
 	checkFinished(finished);
-
+    if
+    :: time > 245 -> finished = true ;
+	:: time <= 245 -> ;
+	fi
+    //handle overflow by asserting time to be a non critical value
+    assert(time < 245);
+    
 }
 
 active proctype P() {
 
 	bool finished = false;
 	int i;
+    int j;
+    bool t;
+    bool z;
+    byte _time;
+    byte _time1;
+    byte _time2;
 
+    printf("atleast i got here \n");
 	int countTrue = 0;
 	
 	do
-		::countTrue > 0 &&flashOOS == false && finished == false  -> move(1,countTrue,finished);
-		::countTrue > 1 &&flashOOS == false && finished == false -> move(2,countTrue,finished);
-		::countTrue < PASSENGERS && flashOOS == true && finished == false ->move(3,countTrue,finished);			
-		::countTrue < PASSENGERS -1 &&flashOOS ==true && finished == false->move(4,countTrue,finished);	
-		:: countTrue == 4 -> finished = true; break;
+		::countTrue > 0 && flash == true && finished == false  -> move(1,countTrue,finished);
+		::countTrue > 1 && flash == true && finished == false -> move(2,countTrue,finished);
+		::countTrue < PASSENGERS && flash == false && finished == false ->move(3,countTrue,finished);			
+		::countTrue < PASSENGERS -1 && flash == false && finished == false->move(4,countTrue,finished);	
+		::finished == true -> finished = true; break;
 	od
-
+    
+    printf("countTrue %d\n",countTrue)
+    printf("time needed %d\n\n" ,time);
+    assert(time > 19);
 }
