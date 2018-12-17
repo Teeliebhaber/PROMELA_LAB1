@@ -1,0 +1,8 @@
+mir wird aus der aufgabenstellung nicht ganz klar was ich erklären soll.
+
+Die kürzeste Lösung ist 17 Min erst gehen dora und bernd dann geht dora zurück dann laufen karin und thomas und bernd kommt zurück und dann laufen wieder dora und bernd rüber.
+
+Die trace von diesem Fall haben wir erstellt indem wir ein assert auf time > 17 gestzt haben und die verification hat uns dann die trace gegeben.
+
+Da wir nur noch sinvolle züge zulassen: jewals 2 rüber und immer nur einer zurück. dadurch haben wir alle 2 züge eine weitere person auf der anderen seite und damit maximal 5 züge.
+wenn Karin jedesmal mit läuft ergibt das einen worst case von 50.
