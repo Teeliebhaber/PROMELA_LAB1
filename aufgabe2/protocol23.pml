@@ -10,7 +10,6 @@ chan network = [0] of {mtype, /* Nachrichten Id */
                        EncMsg};
 
 /* Globale Ghostvariablen */
-bool learned_nonceB, learned_nonceI;
 mtype partyB, partyI, partyA;
 mtype statusB = err;
 mtype statusI = err; 
@@ -112,7 +111,7 @@ active proctype Ingo() {
 
     network ? msgId3 ( party, data);
 
-    (data.content2 == 0);
+    (data.content2 == 0 && party?== agentI);
     
     statusI = ok; 
     endI:

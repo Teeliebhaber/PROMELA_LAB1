@@ -1,8 +1,26 @@
-never TEST {    /* !(((statusB==ok)) && ((statusI==ok))) */
+never NONCEB_UNKNOWN {    /* !((! (((statusB==ok)) && ((partyB==agentI)))) || (! (learned_nonceB))) */
 accept_init:
 T0_init:
 	do
-	:: atomic { (! ((((statusB==ok)) && ((statusI==ok))))) -> assert(!(! ((((statusB==ok)) && ((statusI==ok)))))) }
+	:: atomic { (! (((! (((statusB==ok)) && ((partyB==agentI)))) || (! (learned_nonceB))))) -> assert(!(! (((! (((statusB==ok)) && ((partyB==agentI)))) || (! (learned_nonceB)))))) }
+	od;
+accept_all:
+	skip
+}
+never NONCEI_UNKNOWN {    /* !((! (((statusI==ok)) && ((partyI==agentB)))) || (! (learned_nonceI))) */
+accept_init:
+T0_init:
+	do
+	:: atomic { (! (((! (((statusI==ok)) && ((partyI==agentB)))) || (! (learned_nonceI))))) -> assert(!(! (((! (((statusI==ok)) && ((partyI==agentB)))) || (! (learned_nonceI)))))) }
+	od;
+accept_all:
+	skip
+}
+never TRANSITIVE {    /* !((! (((statusI==ok)) && ((statusB==ok)))) || (((partyB==agentI)) && ((partyI==agentB)))) */
+accept_init:
+T0_init:
+	do
+	:: atomic { (! (((! (((statusI==ok)) && ((statusB==ok)))) || (((partyB==agentI)) && ((partyI==agentB)))))) -> assert(!(! (((! (((statusI==ok)) && ((statusB==ok)))) || (((partyB==agentI)) && ((partyI==agentB))))))) }
 	od;
 accept_all:
 	skip

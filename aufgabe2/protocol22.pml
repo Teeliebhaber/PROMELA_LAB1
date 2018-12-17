@@ -109,7 +109,7 @@ active proctype Ingo() {
 
     network ? msgId3 ( party, data);
 
-    (data.content2 == 0);
+    (data.content2 == 0 && party?== agentI);
     
     statusI = ok; 
     endI:

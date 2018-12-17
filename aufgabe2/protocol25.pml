@@ -113,12 +113,13 @@ active proctype Ingo() {
 
     network ? msgId3 ( party, data);
 
-    (data.content2 == 0 && party?== agentI);
+    (data.content2 == 0 && party == agentI);
     
     statusI = ok; 
     endI:
     (statusB==ok && statusI==ok);
 }
+
   active proctype Attacker() {
   mtype msg, receipt;
   EncMsg data, captured;
@@ -185,4 +186,7 @@ active proctype Ingo() {
 }
 
 	ltl BEIDE_OK { (statusI@endI == ok && statusB@endB == ok) && (statusB@startB != ok && statusI@startI != ok)};
+  ltl NONCEB_UNKNOWN { (statusB == ok && partyB == agentI) -> !learned_nonceB};
+  ltl NONCEI_UNKNOWN { (statusI == ok && partyI == agentB) -> !learned_nonceI};
+  ltl TRANSITIVE {(statusI==ok && statusB==ok) -> (partyB==agentI && partyI==agentB)};
   //ltl TEST {(statusB==ok && statusI== ok)}
