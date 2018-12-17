@@ -10,7 +10,8 @@ chan network = [0] of {mtype, /* Nachrichten Id */
                        EncMsg};
 
 /* Globale Ghostvariablen */
-bool learned_nonceB, learned_nonceI;
+bool learned_nonceB = false;
+bool learned_nonceI = false;
 mtype partyB, partyI, partyA;
 mtype statusB = err;
 mtype statusI = err; 
@@ -123,6 +124,11 @@ active proctype Ingo() {
   EncMsg data, captured;
   do
     :: network ? (msg, _, data) ->
+      if // Haben wir eine Nonce gefunden?
+          :: captured.key == keyA && captured.content2 == nonceB -> learned_nonceB = true;
+          :: captured.key == keyA && captured.content2 == nonceI -> learned_nonceI = true;
+          :: skip;
+      fi
        if /* Merken oder Verwerfen der empfangenen Nachricht */
          :: captured.key   = data.key;
             captured.content1 = data.content1;
@@ -146,21 +152,37 @@ active proctype Ingo() {
               :: data.content1 = agentB;  
               :: data.content1 = agentI;  
               :: data.content1 = nonceA;
-            fi;     
+            fi; 
             if /* Auswahl eines öffentlichen Schlüssels */
               :: data.key = keyA;
               :: data.key = keyB;
               :: data.key = keyI;
             fi;
-            data.content2 = nonceA; /* Im Moment: Setzen der zweiten Inhaltskomponente auf den festen Wert nonceA */
+            if // Schauen, ob man auch andere Noncen nehmen kann + ob content2 überhaupt gefüllt werden sollte
+            ::learned_nonceB == true -> if
+                                            :: data.content2 = nonceB;
+                                            :: data.content2 = nonceA;
+                                        fi
+            ::learned_nonceI == true -> if
+                                            :: data.content2 = nonceI;
+                                            :: data.content2 = nonceA;
+                                        fi
+            ::learned_nonceB == true && learned_nonceB == true ->
+                                        if
+                                        :: data.content2 = nonceA;
+                                        :: data.content2 = nonceB;
+                                        :: data.content2 = nonceI;
+                                        fi
+            fi;
        :: /* Wiederspielen der zuvor abgefangenen Nachricht */
           data.key       = captured.key;
           data.content1  = captured.content1;
           data.content2  = captured.content2;
+       :: msg == msgId3 -> data.content2 = 0;
        fi;
       network ! msg (receipt, data);
   od
 }
 
-	ltl BEIDE_OK { (statusI@endI == ok && statusB@endB == ok) && (statusB@startB != ok && statusI@startI != ok)} ;
+	ltl BEIDE_OK { (statusI@endI == ok && statusB@endB == ok) && (statusB@startB != ok && statusI@startI != ok)};
   //ltl TEST {(statusB==ok && statusI== ok)}
