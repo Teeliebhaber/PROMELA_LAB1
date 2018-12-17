@@ -17,13 +17,12 @@ mtype statusI = err;
 /* Agent Beate */
 active proctype Beate() {
   /* local variables */
-  
   mtype otherKey;      /* der öffentliche Schlüssel des anderen Kommunikationsteilnehmers */
   mtype otherNonce;    /* nonce, die wir von einem anderen Kommunikationsteilnehmer erhalten haben */
   EncMsg encMessage; /* die verschlüsselte Nachricht, die wir an den anderen Kommunikationsteilnehmer schicken wollen */
   EncMsg data;      /* die empfangene verschlüsselte Nachricht */
 
-
+ startB:
   /* Beate will mit Ingo reden  */
   
   partyB   = agentI;
@@ -75,49 +74,90 @@ active proctype Beate() {
 
   
   /* setzen der Ghostvariablenvariable statusB auf ok, da wir am Ende sind und alle Nachrichten dem Protokoll entsprochen haben */
+  
   statusB = ok;
+  endB:
 }
+
+/*
+message:  EncMsg
+party:    mtype
+nonce:    mtype
+*/
 
 active proctype Ingo() {
-    /*local variables*/
-    mtype otherKey;
-    mtype otherNonce;
-    mtype messageId, receiver;
-    EncMsg encMessage;
-    EncMsg data;
+  mtype otherKey, otherNonce;
+  mtype receiver;
+  mtype party;
+  EncMsg message, data;
+  startI:
 
-  /*Receive "Chat Request from Beate".
-    The format is the following:
-    (key, to, enc)
-    key:    Public Key of Receiver
-    to:     Receiver
-    enc:    Encrypted message
-  */
-
-    //Receive the message
-    network ? messageId, receiver, data;
-    //Assert
-    (data.key == keyI && messageId == msgId1);
-    (receiver==agentI);
-    //Check which kind of messageId got received
+  //Receive Message
+    network ? msgId1 (receiver, data);
+    (receiver == agentI);
+    otherNonce = data.content2;
     if
-      :: messageId == msgId1 -> // New Conversation Invite
-        //determineSenderOfFirstMessage(data, partyI, otherNonce);
-        if
-            :: data.content2 == nonceB && data.content1 == agentI ->
-                partyI = agentB;
-                otherKey = keyB;
-        fi
-        encMessage.key = otherKey;
-        encMessage.content1 = nonceB;
-        encMessage.content2 = nonceI;
+      :: otherNonce == nonceA -> otherKey = keyA; partyI = agentA;
+      :: otherNonce == nonceB -> otherKey = keyB; partyI = agentB;
+      :: otherNonce == nonceI -> otherKey = keyI; partyI = agentI;
     fi
-    network ! msgId2 (agentB, encMessage);
-    printf("Message from Ingo sent\n");
+    message.key = otherKey;
+    message.content1 = otherNonce;
+    message.content2 = nonceI;
+
+    network ! msgId2, partyI, message;
+
+    network ? msgId3 ( party, data);
+
+    (data.content2 == 0);
     
-    EncMsg newData;
-    network ? messageId (agentI, newData);
-    statusI=ok;
-    printf("Ingo: Status set to ok\n");
-   printf("Ingo: To be implemented\n")
+    statusI = ok; 
+    endI:
+    (statusB==ok && statusI==ok);
 }
+  active proctype Attacker() {
+  mtype msg, receipt;
+  EncMsg data, captured;
+  do
+    :: network ? (msg, _, data) ->
+       if /* Merken oder Verwerfen der empfangenen Nachricht */
+         :: captured.key   = data.key;
+            captured.content1 = data.content1;
+            captured.content2 = data.content2;
+         :: skip;
+       fi;
+
+    :: /* Wiederspielen einer empfangenen Nachricht oder Senden einer neuen Nachricht */
+       if /* choose message type */
+         :: msg = msgId1;
+         :: msg = msgId2;
+         :: msg = msgId3;
+       fi;
+       if /* Auswahl eines Empfängers (hier: Beate oder Ingo) */
+         :: receipt = agentB;
+         :: receipt = agentI;
+       fi;
+       if 
+       ::  if /* Neue Nachricht zusammenstellen. Auswahl des Inhaltes für die erste Inhaltskomponente der Nachricht */
+              :: data.content1 = agentA;
+              :: data.content1 = agentB;  
+              :: data.content1 = agentI;  
+              :: data.content1 = nonceA;
+            fi;     
+            if /* Auswahl eines öffentlichen Schlüssels */
+              :: data.key = keyA;
+              :: data.key = keyB;
+              :: data.key = keyI;
+            fi;
+            data.content2 = nonceA; /* Im Moment: Setzen der zweiten Inhaltskomponente auf den festen Wert nonceA */
+       :: /* Wiederspielen der zuvor abgefangenen Nachricht */
+          data.key       = captured.key;
+          data.content1  = captured.content1;
+          data.content2  = captured.content2;
+       fi;
+      network ! msg (receipt, data);
+  od
+}
+
+	ltl BEIDE_OK { (statusI@endI == ok && statusB@endB == ok) && (statusB@startB != ok && statusI@startI != ok)} ;
+  //ltl TEST {(statusB==ok && statusI== ok)}

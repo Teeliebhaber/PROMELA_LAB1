@@ -1,0 +1,9 @@
+never TEST {    /* !(((statusB==ok)) && ((statusI==ok))) */
+accept_init:
+T0_init:
+	do
+	:: atomic { (! ((((statusB==ok)) && ((statusI==ok))))) -> assert(!(! ((((statusB==ok)) && ((statusI==ok)))))) }
+	od;
+accept_all:
+	skip
+}

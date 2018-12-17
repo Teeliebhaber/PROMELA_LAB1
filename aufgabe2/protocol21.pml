@@ -17,12 +17,11 @@ mtype statusI = err;
 /* Agent Beate */
 active proctype Beate() {
   /* local variables */
-  
   mtype otherKey;      /* der öffentliche Schlüssel des anderen Kommunikationsteilnehmers */
   mtype otherNonce;    /* nonce, die wir von einem anderen Kommunikationsteilnehmer erhalten haben */
   EncMsg encMessage; /* die verschlüsselte Nachricht, die wir an den anderen Kommunikationsteilnehmer schicken wollen */
   EncMsg data;      /* die empfangene verschlüsselte Nachricht */
-
+  start:
 
   /* Beate will mit Ingo reden  */
   
@@ -75,49 +74,45 @@ active proctype Beate() {
 
   
   /* setzen der Ghostvariablenvariable statusB auf ok, da wir am Ende sind und alle Nachrichten dem Protokoll entsprochen haben */
+  
   statusB = ok;
+  endB:
 }
+
+/*
+message:  EncMsg
+party:    mtype
+nonce:    mtype
+*/
 
 active proctype Ingo() {
-    /*local variables*/
-    mtype otherKey;
-    mtype otherNonce;
-    mtype messageId, receiver;
-    EncMsg encMessage;
-    EncMsg data;
+  mtype otherKey, otherNonce;
+  mtype receiver, party;
+  EncMsg message, data;
+  start:
 
-  /*Receive "Chat Request from Beate".
-    The format is the following:
-    (key, to, enc)
-    key:    Public Key of Receiver
-    to:     Receiver
-    enc:    Encrypted message
-  */
-
-    //Receive the message
-    network ? messageId, receiver, data;
-    //Assert
-    (data.key == keyI && messageId == msgId1);
-    (receiver==agentI);
-    //Check which kind of messageId got received
+  //Receive Message
+    network ? msgId1 (receiver, data);
+    (receiver == agentI);
+    otherNonce = data.content2;
     if
-      :: messageId == msgId1 -> // New Conversation Invite
-        //determineSenderOfFirstMessage(data, partyI, otherNonce);
-        if
-            :: data.content2 == nonceB && data.content1 == agentI ->
-                partyI = agentB;
-                otherKey = keyB;
-        fi
-        encMessage.key = otherKey;
-        encMessage.content1 = nonceB;
-        encMessage.content2 = nonceI;
+      :: otherNonce == nonceA -> otherKey = keyA; partyI = agentA;
+      :: otherNonce == nonceB -> otherKey = keyB; partyI = agentB;
+      :: otherNonce == nonceI -> otherKey = keyI; partyI = agentI;
     fi
-    network ! msgId2 (agentB, encMessage);
-    printf("Message from Ingo sent\n");
+    message.key = otherKey;
+    message.content1 = otherNonce;
+    message.content2 = nonceI;
+
+    network ! msgId2, partyI, message;
+
+    network ? msgId3 (party , data);
+
+    (data.content2 == 0);
     
-    EncMsg newData;
-    network ? messageId (agentI, newData);
-    statusI=ok;
-    printf("Ingo: Status set to ok\n");
-   printf("Ingo: To be implemented\n")
+    statusI = ok; 
+    endI:
+    (statusB==ok && statusI==ok);
 }
+
+	ltl BEIDE_OK { (statusI@endI == ok && statusB@endB == ok) && (statusB@start != ok && statusI@start != ok)} ;
